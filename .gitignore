@@ -1,0 +1,15 @@
+# clasp
+.clasp.json
+
+# Node modules
+node_modules/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
