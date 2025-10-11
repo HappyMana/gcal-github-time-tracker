@@ -1,0 +1,29 @@
+{
+  "timeZone": "Asia/Tokyo",
+  "dependencies": {
+    "enabledAdvancedServices": []
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Google Calendar GitHub Projects Tracker",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/1x/calendar_48dp.png",
+      "layoutProperties": {
+        "primaryColor": "#4285f4"
+      },
+      "homepageTrigger": {
+        "runFunction": "onHomepage",
+        "enabled": true
+      }
+    },
+    "calendar": {
+      "currentEventAccess": "READ_WRITE",
+      "conferenceSolution": []
+    }
+  }
+}

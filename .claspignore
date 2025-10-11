@@ -1,0 +1,10 @@
+**/**
+!src/**/*.js
+!appsscript.json
+.git/**
+node_modules/**
+docs/**
+README.md
+CLAUDE.md
+.clasp.json
+.claspignore
