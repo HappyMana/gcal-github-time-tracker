@@ -1,6 +1,3 @@
-**/**
-!src/**/*.js
-!appsscript.json
 .git/**
 node_modules/**
 docs/**
