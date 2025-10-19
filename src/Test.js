@@ -96,6 +96,53 @@ function testRefresh() {
 }
 
 /**
+ * Test: Event creation form
+ */
+function testEventCreationForm() {
+  Logger.log('=== Testing Event Creation Form ===');
+
+  try {
+    const card = buildEventCreationCard('123', 'Test Issue', 'https://github.com/test/repo/issues/123', 'test/repo');
+    Logger.log('✓ Event creation form作成成功');
+    Logger.log('Card object: ' + (card ? 'OK' : 'NG'));
+  } catch (error) {
+    Logger.log('❌ エラー: ' + error.message);
+    Logger.log('Stack: ' + error.stack);
+  }
+}
+
+/**
+ * Test: Create calendar event (WARNING: This will create an actual event!)
+ */
+function testCreateCalendarEvent() {
+  Logger.log('=== Testing Create Calendar Event ===');
+  Logger.log('⚠️ 警告: この関数は実際にカレンダーイベントを作成します');
+
+  try {
+    // Simulate form submission
+    const e = {
+      formInput: {
+        eventTitle: '[#123] Test Issue',
+        duration: '1',
+        eventDescription: 'Test event\nIssue: https://github.com/test/repo/issues/123'
+      },
+      parameters: {
+        issueNumber: '123',
+        issueUrl: 'https://github.com/test/repo/issues/123'
+      }
+    };
+
+    const response = onSubmitCreateEvent(e);
+    Logger.log('✓ Event作成成功');
+    Logger.log('Response object: ' + (response ? 'OK' : 'NG'));
+    Logger.log('⚠️ Googleカレンダーを確認してイベントが作成されているか確認してください');
+  } catch (error) {
+    Logger.log('❌ エラー: ' + error.message);
+    Logger.log('Stack: ' + error.stack);
+  }
+}
+
+/**
  * Test: Create a test issue (use with caution)
  */
 function testCreateIssue() {
@@ -184,8 +231,13 @@ function runAllTests() {
   Logger.log('\n');
 
   testRefresh();
+  Logger.log('\n');
+
+  testEventCreationForm();
 
   Logger.log('\n========================================');
   Logger.log('  Tests Complete');
   Logger.log('========================================');
+  Logger.log('\n⚠️ testCreateCalendarEvent()は実際にイベントを作成するため、runAllTests()には含まれていません');
+  Logger.log('手動で実行してテストしてください');
 }
