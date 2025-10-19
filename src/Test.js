@@ -67,8 +67,28 @@ function testUI() {
 
   try {
     const card = buildMainCard();
-    Logger.log('✓ Card作成成功');
+    Logger.log('✓ Card作成成功 (通常)');
     Logger.log('Card object: ' + (card ? 'OK' : 'NG'));
+
+    const loadingCard = buildMainCard(true);
+    Logger.log('✓ Card作成成功 (ローディング)');
+    Logger.log('Loading Card object: ' + (loadingCard ? 'OK' : 'NG'));
+  } catch (error) {
+    Logger.log('❌ エラー: ' + error.message);
+    Logger.log('Stack: ' + error.stack);
+  }
+}
+
+/**
+ * Test: Simulate refresh action
+ */
+function testRefresh() {
+  Logger.log('=== Testing Refresh Action ===');
+
+  try {
+    const response = onRefreshIssues({});
+    Logger.log('✓ Refresh action実行成功');
+    Logger.log('Response object: ' + (response ? 'OK' : 'NG'));
   } catch (error) {
     Logger.log('❌ エラー: ' + error.message);
     Logger.log('Stack: ' + error.stack);
@@ -161,6 +181,9 @@ function runAllTests() {
   Logger.log('\n');
 
   testUI();
+  Logger.log('\n');
+
+  testRefresh();
 
   Logger.log('\n========================================');
   Logger.log('  Tests Complete');
