@@ -143,10 +143,50 @@ function testCreateCalendarEvent() {
 }
 
 /**
+ * Test: Issue creation form card
+ */
+function testIssueCreationForm() {
+  Logger.log('=== Testing Issue Creation Form ===');
+
+  try {
+    const card = buildIssueCreationCard();
+    Logger.log('✓ Issue creation form作成成功');
+    Logger.log('Card object: ' + (card ? 'OK' : 'NG'));
+  } catch (error) {
+    Logger.log('❌ エラー: ' + error.message);
+    Logger.log('Stack: ' + error.stack);
+  }
+}
+
+/**
+ * Test: Success card after issue creation
+ */
+function testIssueCreatedCard() {
+  Logger.log('=== Testing Issue Created Card ===');
+
+  try {
+    const mockIssue = {
+      number: 123,
+      title: 'Test Issue',
+      state: 'open',
+      url: 'https://github.com/test/repo/issues/123'
+    };
+
+    const card = buildIssueCreatedCard(mockIssue);
+    Logger.log('✓ Issue created card作成成功');
+    Logger.log('Card object: ' + (card ? 'OK' : 'NG'));
+  } catch (error) {
+    Logger.log('❌ エラー: ' + error.message);
+    Logger.log('Stack: ' + error.stack);
+  }
+}
+
+/**
  * Test: Create a test issue (use with caution)
  */
 function testCreateIssue() {
   Logger.log('=== Testing Create Issue ===');
+  Logger.log('⚠️ 警告: この関数は実際にGitHubにissueを作成します');
 
   const owner = PropertiesService.getScriptProperties().getProperty('GITHUB_REPO_OWNER');
   const repo = PropertiesService.getScriptProperties().getProperty('GITHUB_REPO_NAME');
@@ -167,6 +207,7 @@ function testCreateIssue() {
     Logger.log('✓ Issue作成成功');
     Logger.log('Issue #' + testIssue.number);
     Logger.log('URL: ' + testIssue.url);
+    Logger.log('⚠️ GitHubで作成されたissueを確認してください');
   } catch (error) {
     Logger.log('❌ エラー: ' + error.message);
   }
@@ -234,10 +275,18 @@ function runAllTests() {
   Logger.log('\n');
 
   testEventCreationForm();
+  Logger.log('\n');
+
+  testIssueCreationForm();
+  Logger.log('\n');
+
+  testIssueCreatedCard();
 
   Logger.log('\n========================================');
   Logger.log('  Tests Complete');
   Logger.log('========================================');
-  Logger.log('\n⚠️ testCreateCalendarEvent()は実際にイベントを作成するため、runAllTests()には含まれていません');
+  Logger.log('\n⚠️ 以下のテストは実際にデータを作成するため、runAllTests()には含まれていません：');
+  Logger.log('• testCreateCalendarEvent() - カレンダーイベントを作成');
+  Logger.log('• testCreateIssue() - GitHubにissueを作成');
   Logger.log('手動で実行してテストしてください');
 }

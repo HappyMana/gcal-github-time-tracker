@@ -67,6 +67,19 @@ function buildMainCard(isLoading) {
     try {
       const issues = fetchUserIssues();
 
+      // Add "Create New Issue" button at the top
+      section.addWidget(
+        CardService.newTextButton()
+          .setText('➕ 新規issue作成')
+          .setOnClickAction(
+            CardService.newAction()
+              .setFunctionName('onCreateNewIssue')
+          )
+          .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+      );
+
+      section.addWidget(CardService.newDivider());
+
       if (!issues || issues.length === 0) {
         section.addWidget(
           CardService.newTextParagraph()
@@ -356,4 +369,233 @@ function onSubmitCreateEvent(e) {
       .setNotification(notification)
       .build();
   }
+}
+
+/**
+ * Handles create new issue button click
+ * Shows issue creation form
+ * @param {Object} e - Event object
+ * @return {ActionResponse} Response with issue creation card
+ */
+function onCreateNewIssue(e) {
+  Logger.log('onCreateNewIssue triggered');
+
+  // Build issue creation card
+  const card = buildIssueCreationCard();
+
+  const navigation = CardService.newNavigation()
+    .pushCard(card);
+
+  return CardService.newActionResponseBuilder()
+    .setNavigation(navigation)
+    .build();
+}
+
+/**
+ * Builds the issue creation form card
+ * @return {Card} Issue creation card
+ */
+function buildIssueCreationCard() {
+  const card = CardService.newCardBuilder();
+
+  card.setHeader(
+    CardService.newCardHeader()
+      .setTitle('➕ 新規issue作成')
+      .setSubtitle('GitHubに新しいissueを作成')
+  );
+
+  const section = CardService.newCardSection();
+
+  // Repository selection
+  const owner = PropertiesService.getScriptProperties().getProperty('GITHUB_REPO_OWNER');
+  const repo = PropertiesService.getScriptProperties().getProperty('GITHUB_REPO_NAME');
+
+  if (!owner || !repo) {
+    section.addWidget(
+      CardService.newTextParagraph()
+        .setText('⚠️ リポジトリ設定が必要です。\n\nスクリプトプロパティで以下を設定してください：\n• GITHUB_REPO_OWNER\n• GITHUB_REPO_NAME')
+    );
+
+    card.addSection(section);
+    return card.build();
+  }
+
+  // Display repository info
+  section.addWidget(
+    CardService.newDecoratedText()
+      .setText('<b>作成先リポジトリ</b>')
+      .setBottomLabel('📁 ' + owner + '/' + repo)
+  );
+
+  section.addWidget(CardService.newDivider());
+
+  // Issue title input
+  section.addWidget(
+    CardService.newTextInput()
+      .setFieldName('issueTitle')
+      .setTitle('Issueタイトル *')
+      .setHint('タスクの概要を入力してください')
+  );
+
+  // Issue body input
+  section.addWidget(
+    CardService.newTextInput()
+      .setFieldName('issueBody')
+      .setTitle('説明')
+      .setHint('詳細な説明を入力してください（任意）')
+      .setMultiline(true)
+  );
+
+  section.addWidget(CardService.newDivider());
+
+  // Create button
+  section.addWidget(
+    CardService.newTextButton()
+      .setText('➕ Issueを作成')
+      .setOnClickAction(
+        CardService.newAction()
+          .setFunctionName('onSubmitCreateIssue')
+          .setParameters({
+            'owner': owner,
+            'repo': repo
+          })
+      )
+      .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+  );
+
+  card.addSection(section);
+
+  return card.build();
+}
+
+/**
+ * Handles issue creation form submission
+ * Creates GitHub issue with the provided data
+ * @param {Object} e - Event object with form inputs
+ * @return {ActionResponse} Response with notification and success card
+ */
+function onSubmitCreateIssue(e) {
+  Logger.log('onSubmitCreateIssue triggered');
+
+  try {
+    const formInputs = e.formInput;
+    const params = e.parameters;
+
+    const issueTitle = formInputs.issueTitle;
+    const issueBody = formInputs.issueBody || '';
+    const owner = params.owner;
+    const repo = params.repo;
+
+    // Validate title
+    if (!issueTitle || issueTitle.trim() === '') {
+      const notification = CardService.newNotification()
+        .setText('❌ Issueタイトルを入力してください');
+
+      return CardService.newActionResponseBuilder()
+        .setNotification(notification)
+        .build();
+    }
+
+    Logger.log('Creating issue: ' + issueTitle + ' in ' + owner + '/' + repo);
+
+    // Create issue via GitHub API
+    const createdIssue = createGitHubIssue(owner, repo, issueTitle, issueBody);
+
+    Logger.log('Issue created successfully: ' + createdIssue.url);
+
+    // Show success card with issue details
+    const successCard = buildIssueCreatedCard(createdIssue);
+
+    const navigation = CardService.newNavigation()
+      .updateCard(successCard);
+
+    const notification = CardService.newNotification()
+      .setText('✅ Issue #' + createdIssue.number + ' を作成しました');
+
+    return CardService.newActionResponseBuilder()
+      .setNotification(notification)
+      .setNavigation(navigation)
+      .build();
+
+  } catch (error) {
+    Logger.log('Error creating issue: ' + error.message);
+    Logger.log('Error stack: ' + error.stack);
+
+    const notification = CardService.newNotification()
+      .setText('❌ エラー: ' + error.message);
+
+    return CardService.newActionResponseBuilder()
+      .setNotification(notification)
+      .build();
+  }
+}
+
+/**
+ * Builds the success card after issue creation
+ * @param {Object} issue - Created issue object
+ * @return {Card} Success card
+ */
+function buildIssueCreatedCard(issue) {
+  const card = CardService.newCardBuilder();
+
+  card.setHeader(
+    CardService.newCardHeader()
+      .setTitle('✅ Issue作成完了')
+      .setSubtitle('Issue #' + issue.number)
+  );
+
+  const section = CardService.newCardSection();
+
+  // Issue details
+  section.addWidget(
+    CardService.newDecoratedText()
+      .setText('<b>' + issue.title + '</b>')
+      .setBottomLabel('Status: ' + issue.state)
+      .setOpenLink(CardService.newOpenLink().setUrl(issue.url))
+  );
+
+  section.addWidget(CardService.newDivider());
+
+  // Issue URL
+  section.addWidget(
+    CardService.newTextParagraph()
+      .setText('<b>Issue URL:</b>')
+  );
+
+  section.addWidget(
+    CardService.newTextParagraph()
+      .setText('<a href="' + issue.url + '">' + issue.url + '</a>')
+  );
+
+  section.addWidget(CardService.newDivider());
+
+  // Back button
+  section.addWidget(
+    CardService.newTextButton()
+      .setText('← サイドバーに戻る')
+      .setOnClickAction(
+        CardService.newAction()
+          .setFunctionName('onBackToMain')
+      )
+  );
+
+  card.addSection(section);
+
+  return card.build();
+}
+
+/**
+ * Handles back to main button click
+ * @param {Object} e - Event object
+ * @return {ActionResponse} Response navigating back to main
+ */
+function onBackToMain(e) {
+  Logger.log('onBackToMain triggered');
+
+  const navigation = CardService.newNavigation()
+    .popToRoot();
+
+  return CardService.newActionResponseBuilder()
+    .setNavigation(navigation)
+    .build();
 }
