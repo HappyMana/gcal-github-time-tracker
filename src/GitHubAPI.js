@@ -57,6 +57,13 @@ function getAuthorizationUrl() {
  * @return {boolean} True if authenticated
  */
 function isAuthenticated() {
+  // Check if Personal Access Token is configured (for development/testing)
+  const pat = PropertiesService.getScriptProperties().getProperty('GITHUB_PERSONAL_ACCESS_TOKEN');
+  if (pat) {
+    return true;
+  }
+
+  // Otherwise check OAuth2
   const service = getGitHubService();
   return service.hasAccess();
 }
@@ -71,13 +78,27 @@ function resetGitHubAuth() {
 }
 
 /**
+ * Gets the access token (either from PAT or OAuth2)
+ * @return {string} The access token
+ */
+function getAccessToken() {
+  // Check for Personal Access Token first (for development/testing)
+  const pat = PropertiesService.getScriptProperties().getProperty('GITHUB_PERSONAL_ACCESS_TOKEN');
+  if (pat) {
+    return pat;
+  }
+
+  // Otherwise use OAuth2
+  const service = getGitHubService();
+  return service.getAccessToken();
+}
+
+/**
  * Fetches issues assigned to the authenticated user
  * @return {Array} Array of issue objects
  */
 function fetchUserIssues() {
-  const service = getGitHubService();
-
-  if (!service.hasAccess()) {
+  if (!isAuthenticated()) {
     Logger.log('Not authenticated with GitHub');
     return null;
   }
@@ -86,7 +107,7 @@ function fetchUserIssues() {
     const url = 'https://api.github.com/issues?filter=assigned&state=open&per_page=100';
     const response = UrlFetchApp.fetch(url, {
       headers: {
-        'Authorization': 'Bearer ' + service.getAccessToken(),
+        'Authorization': 'Bearer ' + getAccessToken(),
         'Accept': 'application/vnd.github.v3+json',
         'User-Agent': 'Google-Apps-Script'
       },
@@ -127,9 +148,7 @@ function fetchUserIssues() {
  * @return {Object} The created issue object
  */
 function createGitHubIssue(owner, repo, title, body) {
-  const service = getGitHubService();
-
-  if (!service.hasAccess()) {
+  if (!isAuthenticated()) {
     Logger.log('Not authenticated with GitHub');
     throw new Error('Not authenticated with GitHub');
   }
@@ -144,7 +163,7 @@ function createGitHubIssue(owner, repo, title, body) {
     const response = UrlFetchApp.fetch(url, {
       method: 'post',
       headers: {
-        'Authorization': 'Bearer ' + service.getAccessToken(),
+        'Authorization': 'Bearer ' + getAccessToken(),
         'Accept': 'application/vnd.github.v3+json',
         'User-Agent': 'Google-Apps-Script',
         'Content-Type': 'application/json'
